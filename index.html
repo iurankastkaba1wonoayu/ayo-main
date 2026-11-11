@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Petualangan Berpikir Komputasional</title>
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #eef3fb;
+    --card: #ffffff;
+    --text: #1d2433;
+    --muted: #5b6475;
+    --primary: #3c6fd6;
+    --accent: #f2a541;
+    --ok: #2e9e5b;
+    --bad: #c94545;
+    --border: #d5deee;
+    --locked: #b8c0d0;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #121722;
+      --card: #1d2432;
+      --text: #eef1f7;
+      --muted: #aab3c5;
+      --primary: #6b92e6;
+      --accent: #f5b65c;
+      --ok: #3fb872;
+      --bad: #e06666;
+      --border: #2e3747;
+      --locked: #4a5366;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #121722;
+    --card: #1d2432;
+    --text: #eef1f7;
+    --muted: #aab3c5;
+    --primary: #6b92e6;
+    --accent: #f5b65c;
+    --ok: #3fb872;
+    --bad: #e06666;
+    --border: #2e3747;
+    --locked: #4a5366;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+  .game {
+    width: 100%;
+    max-width: 640px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 24px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.07);
+  }
+  .top { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 14px; }
+  h1 { font-size: 1.15rem; margin: 0; }
+  .hearts { font-size: 1.1rem; letter-spacing: 2px; }
+  .muted { color: var(--muted); font-size: 0.92rem; line-height: 1.5; }
+  .title { font-size: 1.35rem; font-weight: 800; margin: 6px 0 10px; }
+  .story { font-size: 1.02rem; line-height: 1.6; margin: 0 0 18px; }
+  .btn {
+    padding: 11px 20px;
+    border-radius: 11px;
+    border: none;
+    background: var(--primary);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.98rem;
+    cursor: pointer;
+  }
+  .btn.alt { background: var(--accent); color: #1d2433; }
+  .btn:disabled { opacity: .4; cursor: default; }
+  .row { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+
+  /* Peta */
+  .map { display: grid; gap: 12px; }
+  .stage {
+    display: flex; align-items: center; gap: 14px;
+    border: 2px solid var(--border); border-radius: 14px; padding: 14px;
+    background: var(--card); text-align: left; width: 100%; color: var(--text);
+    font: inherit; cursor: pointer;
+  }
+  .stage:disabled { cursor: default; opacity: .55; }
+  .stage .icon {
+    width: 46px; height: 46px; flex: 0 0 46px; border-radius: 50%;
+    display: grid; place-items: center; font-size: 1.3rem; background: var(--primary); color: #fff;
+  }
+  .stage.locked .icon { background: var(--locked); }
+  .stage.done { border-color: var(--ok); }
+  .stage.done .icon { background: var(--ok); }
+  .stage .name { font-weight: 800; }
+  .stage .sub { color: var(--muted); font-size: 0.88rem; margin-top: 2px; }
+
+  /* Kuis */
+  .progress { height: 8px; background: var(--border); border-radius: 99px; overflow: hidden; margin: 6px 0 16px; }
+  .progress > div { height: 100%; width: 0; background: var(--primary); transition: width .3s; }
+  .clue { font-size: 1.1rem; line-height: 1.55; min-height: 4.5em; margin: 0 0 16px; }
+  .options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .opt {
+    padding: 14px 10px; font-size: 1rem; font-weight: 700; letter-spacing: .4px;
+    border: 2px solid var(--border); border-radius: 12px; background: var(--card);
+    color: var(--text); cursor: pointer; transition: transform .1s, border-color .2s, background .2s;
+  }
+  .opt:hover:not(:disabled) { border-color: var(--primary); transform: translateY(-1px); }
+  .opt:disabled { cursor: default; }
+  .opt.ok { background: var(--ok); border-color: var(--ok); color: #fff; }
+  .opt.bad { background: var(--bad); border-color: var(--bad); color: #fff; }
+  .info {
+    margin-top: 16px; padding: 12px 14px; border-radius: 10px; font-size: 0.95rem; line-height: 1.5;
+    background: var(--bg); border-left: 4px solid var(--primary); min-height: 1em;
+  }
+  .info.ok { border-left-color: var(--ok); }
+  .info.bad { border-left-color: var(--bad); }
+  .hidden { display: none !important; }
+  .shake { animation: shake .35s; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+  @media (max-width: 480px) {
+    .options { grid-template-columns: 1fr; }
+    .game { padding: 18px; }
+  }
+</style>
+</head>
+<body>
+<div class="game">
+  <div class="top">
+    <h1>Petualangan Berpikir Komputasional</h1>
+    <span class="hearts" id="hearts"></span>
+  </div>
+
+  <!-- Layar peta -->
+  <section id="screenMap">
+    <div class="title">Kota Komputer Sedang Padam</div>
+    <p class="story">Listrik di Kota Komputer mati, dan setiap distrik butuh bantuanmu. Kamu adalah teknisi muda yang harus memulihkan tiga distrik. Setiap distrik dipulihkan dengan menjawab tantangan. Selesaikan semuanya untuk membuka Gerbang Pusat.</p>
+    <div class="map" id="mapList"></div>
+  </section>
+
+  <!-- Layar cerita -->
+  <section id="screenStory" class="hidden">
+    <div class="title" id="storyTitle"></div>
+    <p class="story" id="storyText"></p>
+    <div class="row"><button class="btn" id="storyBtn">Mulai tantangan</button></div>
+  </section>
+
+  <!-- Layar kuis -->
+  <section id="screenQuiz" class="hidden">
+    <div class="muted" id="quizCounter"></div>
+    <div class="progress"><div id="quizBar"></div></div>
+    <p class="clue" id="clue"></p>
+    <div class="options" id="options"></div>
+    <div class="info" id="info"></div>
+    <div class="row"><button class="btn" id="nextBtn" disabled>Lanjut</button></div>
+  </section>
+
+  <!-- Layar hasil -->
+  <section id="screenResult" class="hidden">
+    <div class="title" id="resultTitle"></div>
+    <p class="story" id="resultText"></p>
+    <div class="row"><button class="btn" id="resultBtn">Lanjut</button></div>
+  </section>
+</div>
+
+<script>
+const DATA = {
+  chapters: [
+    {
+      id: "pikir",
+      name: "Distrik Pikir",
+      icon: "🧠",
+      intro: "Lampu-lampu kota berkedip karena sistem kehilangan cara berpikir yang runtut. Pulihkan pusat pikirnya dengan menguasai dasar berpikir komputasional.",
+      done: "Pusat pikir kembali menyala! Kota mulai bisa menyusun langkah dengan teratur.",
+      words: [
+        { answer: "LOGIKA", clue: "Pengaluran penalaran secara runtut yang menjadi dasar dalam berpikir komputasional.", info: "Logika adalah cara menalar yang runtut dan masuk akal, dan menjadi dasar setiap langkah dalam berpikir komputasional." },
+        { answer: "POLA", clue: "Kesamaan atau bentuk keteraturan yang dicari saat menganalisis beberapa masalah.", info: "Pengenalan pola berarti mencari kesamaan antar masalah, sehingga solusi yang sudah ada bisa dipakai lagi." },
+        { answer: "DEKOMPOSISI", clue: "Landasan berpikir komputasional dengan cara memecah masalah kompleks menjadi bagian lebih kecil.", info: "Dekomposisi memecah masalah besar menjadi bagian-bagian kecil yang lebih mudah dikerjakan satu per satu." },
+        { answer: "ALGORITMA", clue: "Urutan langkah-langkah logis dan terstruktur untuk menyelesaikan suatu masalah.", info: "Algoritma adalah resep langkah demi langkah. Urutannya harus jelas agar hasilnya selalu sama." },
+        { answer: "ABSTRAKSI", clue: "Proses membuang atau mengabaikan detail yang tidak penting agar fokus pada informasi utama.", info: "Abstraksi menyaring detail yang tidak perlu supaya kita fokus pada inti masalah." }
+      ]
+    },
+    {
+      id: "io",
+      name: "Distrik Masukan & Keluaran",
+      icon: "🖥️",
+      intro: "Kamera pemindai, layar, dan printer kota tidak berfungsi. Pulihkan alat-alat yang menghubungkan kota dengan dunia luar.",
+      done: "Alat masukan dan keluaran sudah berfungsi. Kota kembali terhubung dengan warganya!",
+      words: [
+        { answer: "SCANNER", clue: "Perangkat masukan yang memindai dokumen fisik menjadi format digital/gambar.", info: "Scanner mengubah dokumen kertas menjadi file digital atau gambar yang bisa disimpan dan dikirim." },
+        { answer: "KEYBOARD", clue: "Perangkat masukan utama berupa papan yang berisi susunan tombol huruf, angka, dan simbol.", info: "Keyboard adalah perangkat masukan utama untuk mengetik huruf, angka, dan simbol ke komputer." },
+        { answer: "MOUSE", clue: "Perangkat masukan yang digunakan untuk menggerakkan kursor di layar.", info: "Mouse dipakai untuk menggerakkan kursor dan memilih objek di layar." },
+        { answer: "MONITOR", clue: "Perangkat keluaran yang menampilkan hasil pemrosesan dalam bentuk visual/layar.", info: "Monitor menampilkan hasil pemrosesan komputer dalam bentuk gambar dan teks." },
+        { answer: "PRINTER", clue: "Perangkat keras yang digunakan untuk mencetak dokumen digital ke media kertas.", info: "Printer mengubah dokumen digital menjadi salinan di atas kertas." }
+      ]
+    },
+    {
+      id: "menara",
+      name: "Menara Perangkat",
+      icon: "⚙️",
+      intro: "Menara pusat kota menyimpan inti komputer. Pulihkan bagian fisik, program, dan memorinya agar seluruh kota bisa bekerja kembali.",
+      done: "Menara pusat menyala terang. Kota Komputer pulih sepenuhnya!",
+      words: [
+        { answer: "HARDWARE", clue: "Perangkat fisik komputer yang dapat dilihat, dipegang, dan dipindahkan.", info: "Hardware adalah bagian fisik komputer, misalnya monitor, keyboard, dan prosesor." },
+        { answer: "SOFTWARE", clue: "Perangkat lunak berupa program atau aplikasi yang memberi perintah pada komputer.", info: "Software adalah program atau aplikasi yang memberi perintah kepada hardware." },
+        { answer: "RAM", clue: "Memori penyimpanan sementara pada komputer yang bersifat volatile.", info: "RAM menyimpan data sementara saat komputer bekerja. Datanya hilang ketika komputer dimatikan." }
+      ]
+    }
+  ],
+  finalChallenge: {
+    name: "Gerbang Pusat",
+    icon: "🏁",
+    intro: "Semua distrik sudah pulih. Sekarang buktikan kemampuanmu di Gerbang Pusat. Jawab 5 soal acak dari semua distrik dan minimal 4 harus benar untuk membuka gerbang.",
+    done: "Gerbang Pusat terbuka! Kota Komputer menyala sepenuhnya. Kamu telah menjadi teknisi berpikir komputasional yang hebat.",
+    count: 5,
+    pass: 4
+  }
+};
+
+const ALL_WORDS = DATA.chapters.flatMap(c => c.words);
+const MAX_HEARTS = 3;
+const state = {
+  done: {},        // id -> true jika distrik selesai
+  current: null,   // id distrik aktif
+  hearts: MAX_HEARTS,
+  questions: [],
+  index: 0,
+  answered: false
+};
+
+const $ = id => document.getElementById(id);
+const show = id => {
+  ["screenMap", "screenStory", "screenQuiz", "screenResult"].forEach(s => $(s).classList.add("hidden"));
+  $(id).classList.remove("hidden");
+};
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function renderHearts() {
+  $("hearts").textContent = "❤️".repeat(state.hearts) + "🤍".repeat(MAX_HEARTS - state.hearts);
+}
+
+function renderMap() {
+  show("screenMap");
+  const list = $("mapList");
+  list.innerHTML = "";
+  const allDone = DATA.chapters.every(c => state.done[c.id]);
+
+  DATA.chapters.forEach((c, i) => {
+    const unlocked = i === 0 || state.done[DATA.chapters[i - 1].id];
+    const isDone = !!state.done[c.id];
+    const b = document.createElement("button");
+    b.className = "stage" + (isDone ? " done" : "") + (!unlocked ? " locked" : "");
+    b.disabled = !unlocked;
+    b.innerHTML = `<div class="icon">${isDone ? "✓" : (unlocked ? c.icon : "🔒")}</div>
+      <div><div class="name">${c.name}</div>
+      <div class="sub">${isDone ? "Sudah dipulihkan" : (unlocked ? c.words.length + " tantangan" : "Selesaikan distrik sebelumnya")}</div></div>`;
+    b.onclick = () => openChapter(c.id);
+    list.appendChild(b);
+  });
+
+  const gate = document.createElement("button");
+  gate.className = "stage" + (!allDone ? " locked" : "");
+  gate.disabled = !allDone;
+  gate.innerHTML = `<div class="icon">${allDone ? DATA.finalChallenge.icon : "🔒"}</div>
+    <div><div class="name">${DATA.finalChallenge.name}</div>
+    <div class="sub">${allDone ? "Tantangan akhir" : "Pulihkan semua distrik dulu"}</div></div>`;
+  gate.onclick = () => openFinal();
+  list.appendChild(gate);
+}
+
+function openChapter(id) {
+  const c = DATA.chapters.find(x => x.id === id);
+  state.current = id;
+  $("storyTitle").textContent = c.name;
+  $("storyText").textContent = c.intro;
+  $("storyBtn").textContent = "Mulai tantangan";
+  $("storyBtn").onclick = () => startQuiz(c.words, c.words.length, c.words.length, () => finishChapter(c));
+  show("screenStory");
+}
+
+function openFinal() {
+  state.current = "final";
+  $("storyTitle").textContent = DATA.finalChallenge.name;
+  $("storyText").textContent = DATA.finalChallenge.intro;
+  $("storyBtn").textContent = "Masuk Gerbang Pusat";
+  $("storyBtn").onclick = () => startQuiz(ALL_WORDS, DATA.finalChallenge.count, DATA.finalChallenge.pass, finishFinal);
+  show("screenStory");
+}
+
+function startQuiz(pool, count, pass, onWin) {
+  state.hearts = MAX_HEARTS;
+  state.questions = shuffle([...pool]).slice(0, count);
+  state.index = 0;
+  state.correct = 0;
+  state.pass = pass;
+  state.onWin = onWin;
+  state.isFinal = state.current === "final";
+  renderHearts();
+  show("screenQuiz");
+  showQuestion();
+}
+
+function showQuestion() {
+  state.answered = false;
+  const q = state.questions[state.index];
+  const distractors = shuffle(ALL_WORDS.filter(w => w.answer !== q.answer)).slice(0, 3);
+  const opts = shuffle([q.answer, ...distractors.map(d => d.answer)]);
+
+  $("quizCounter").textContent = `Tantangan ${state.index + 1} dari ${state.questions.length}`;
+  $("quizBar").style.width = `${(state.index / state.questions.length) * 100}%`;
+  $("clue").textContent = q.clue;
+  $("info").textContent = "";
+  $("info").className = "info";
+  $("nextBtn").disabled = true;
+  $("nextBtn").textContent = state.index === state.questions.length - 1 ? "Lihat hasil" : "Lanjut";
+
+  const box = $("options");
+  box.innerHTML = "";
+  opts.forEach(opt => {
+    const b = document.createElement("button");
+    b.className = "opt";
+    b.textContent = opt;
+    b.onclick = () => choose(b, opt, q);
+    box.appendChild(b);
+  });
+}
+
+function choose(button, opt, q) {
+  if (state.answered) return;
+  state.answered = true;
+  document.querySelectorAll("#options .opt").forEach(b => {
+    b.disabled = true;
+    if (b.textContent === q.answer) b.classList.add("ok");
+  });
+  const info = $("info");
+  if (opt === q.answer) {
+    state.correct++;
+    button.classList.add("ok");
+    info.className = "info ok";
+    info.textContent = "Benar! " + q.info;
+  } else {
+    state.hearts--;
+    renderHearts();
+    button.classList.add("bad", "shake");
+    info.className = "info bad";
+    info.textContent = `Belum tepat. Jawaban yang benar: ${q.answer}. ${q.info}`;
+  }
+  $("nextBtn").disabled = false;
+  if (state.hearts === 0) {
+    $("nextBtn").textContent = "Lihat hasil";
+  }
+}
+
+$("nextBtn").onclick = () => {
+  if (state.hearts === 0) return endQuizLost();
+  state.index++;
+  if (state.index >= state.questions.length) return endQuiz();
+  showQuestion();
+};
+
+function endQuiz() {
+  const remainingNeeded = state.questions.length - state.pass;
+  const wrong = state.questions.length - state.correct;
+  if (state.correct >= state.pass && state.hearts > 0) {
+    return state.onWin();
+  }
+  if (state.isFinal) {
+    return lose(`Kamu menjawab ${state.correct} dari ${state.questions.length} soal dengan benar. Gerbang Pusat butuh minimal ${state.pass}. Coba lagi dengan soal yang baru!`, "Coba lagi");
+  }
+  return endQuizLost();
+}
+
+function endQuizLost() {
+  lose("Nyawamu habis sebelum distrik ini pulih. Jangan menyerah, kamu bisa mencoba lagi!", "Coba lagi distrik ini");
+}
+
+function lose(text, btnText) {
+  $("resultTitle").textContent = "Belum berhasil";
+  $("resultText").textContent = text;
+  $("resultBtn").textContent = btnText;
+  $("resultBtn").onclick = () => {
+    if (state.isFinal) openFinal();
+    else openChapter(state.current);
+  };
+  show("screenResult");
+}
+
+function finishChapter(c) {
+  state.done[c.id] = true;
+  $("resultTitle").textContent = `${c.name} pulih!`;
+  $("resultText").textContent = c.done;
+  $("resultBtn").textContent = "Kembali ke peta";
+  $("resultBtn").onclick = renderMap;
+  show("screenResult");
+}
+
+function finishFinal() {
+  $("resultTitle").textContent = "Kota Komputer pulih!";
+  $("resultText").textContent = DATA.finalChallenge.done;
+  $("resultBtn").textContent = "Main lagi";
+  $("resultBtn").onclick = () => {
+    state.done = {};
+    renderMap();
+  };
+  show("screenResult");
+}
+
+renderMap();
+</script>
+</body>
+</html>
